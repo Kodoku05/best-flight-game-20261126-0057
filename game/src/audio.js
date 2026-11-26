@@ -1,0 +1,8 @@
+export class FlightAudio{
+ constructor(){this.muted=false;this.ctx=null;this.lastWarning=0;}
+ start(){if(this.ctx){this.ctx.resume();return;}this.ctx=new AudioContext();const c=this.ctx;this.master=c.createGain();this.master.gain.value=.18;this.master.connect(c.destination);this.engine=c.createOscillator();this.engine.type='sawtooth';this.eg=c.createGain();this.eg.gain.value=.12;this.engine.connect(this.eg).connect(this.master);this.engine.start();const b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;this.wind=c.createBufferSource();this.wind.buffer=b;this.wind.loop=true;this.wg=c.createGain();this.wg.gain.value=.03;this.wind.connect(this.wg).connect(this.master);this.wind.start();this.music=setInterval(()=>{if(!this.muted)this.tone([220,261.63,293.66,329.63,392][Math.floor(Math.random()*5)],.5,.07,'triangle');},800);}
+ tone(f,d=.2,v=.3,type='sine'){if(!this.ctx)return;const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.connect(g).connect(this.master);o.start();o.stop(c.currentTime+d);}
+ chime(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.tone(f,.35,.3),i*85));}
+ update(s){if(!this.ctx)return;this.master.gain.value=this.muted?0:.18;this.engine.frequency.setTargetAtTime(45+s.throttle*65+s.speed*.3,this.ctx.currentTime,.1);this.wg.gain.value=.015+s.speed*.001;if(s.stall&&s.time-this.lastWarning>.8){this.tone(880,.15,.4);this.lastWarning=s.time;}}
+ toggle(){this.muted=!this.muted;}
+}
